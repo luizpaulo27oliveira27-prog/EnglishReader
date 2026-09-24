@@ -1,7 +1,8 @@
-import { ScrollView, StyleSheet, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Speech from 'expo-speech';
+import { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -263,7 +264,7 @@ export default function HomeScreen() {
               </ThemedText>
 
               <Pressable
-                onPress={() => alert('Pronunciation coming soon!')}
+                onPress={() => Speech.speak(selectedWord.word, { language: 'en-US' })}
                 style={styles.audioButton}
               >
                 <ThemedText>
@@ -284,47 +285,47 @@ export default function HomeScreen() {
             </ThemedView>
           )}
 
-         <ThemedView style={styles.savedBox}>
-  <ThemedText type="subtitle">
-    📚 Minhas palavras
-  </ThemedText>
+          <ThemedView style={styles.savedBox}>
+            <ThemedText type="subtitle">
+              📚 Minhas palavras
+            </ThemedText>
 
-  {savedWords.length === 0 ? (
-    <ThemedText>
-      Nenhuma palavra salva ainda.
-    </ThemedText>
-  ) : (
-    <>
-      <ThemedText>
-        {savedWords.length} palavra(s) salva(s).
-      </ThemedText>
+            {savedWords.length === 0 ? (
+              <ThemedText>
+                Nenhuma palavra salva ainda.
+              </ThemedText>
+            ) : (
+              <>
+                <ThemedText>
+                  {savedWords.length} palavra(s) salva(s).
+                </ThemedText>
 
-  {savedWords.map((word) => {
-    const savedWord = words[word];
+                {savedWords.map((word) => {
+                  const savedWord = words[word];
 
-    return (
-      <Pressable
-        key={word}
-        onPress={() => selectWord(word)}
-        style={styles.savedWordButton}
-      >
-        <ThemedText style={styles.savedWord}>
-        ⭐ {savedWord.word}
-        </ThemedText>
+                  return (
+                    <Pressable
+                      key={word}
+                      onPress={() => selectWord(word)}
+                      style={styles.savedWordButton}
+                    >
+                      <ThemedText style={styles.savedWord}>
+                        ⭐ {savedWord.word}
+                      </ThemedText>
 
-        <ThemedText style={styles.savedWordMeaning}>
-          {savedWord.meaning}
-        </ThemedText>
+                      <ThemedText style={styles.savedWordMeaning}>
+                        {savedWord.meaning}
+                      </ThemedText>
 
-        <ThemedText style={styles.savedWordPronunciation}>
-          / {savedWord.pronunciation} /
-        </ThemedText>
-     </Pressable>
-   );
-  })}
-    </>
-  )}
-</ThemedView>
+                      <ThemedText style={styles.savedWordPronunciation}>
+                        / {savedWord.pronunciation} /
+                      </ThemedText>
+                    </Pressable>
+                  );
+                })}
+              </>
+            )}
+          </ThemedView>
 
           <ThemedView style={styles.tipBox}>
             <ThemedText type="subtitle">
