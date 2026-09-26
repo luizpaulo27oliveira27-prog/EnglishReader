@@ -320,6 +320,17 @@ export default function HomeScreen() {
                       <ThemedText style={styles.savedWordPronunciation}>
                         / {savedWord.pronunciation} /
                       </ThemedText>
+
+                      <Pressable
+                        onPress={() =>
+                          Speech.speak(savedWord.word, { language: 'en-US' })
+                        }
+                        style={styles.savedWordAudioButton}
+                      >
+                        <ThemedText>
+                          🔊 Ouvir
+                        </ThemedText>
+                      </Pressable>
                     </Pressable>
                   );
                 })}
@@ -453,6 +464,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 10,
+  },
+
+  savedWordAudioButton: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
 
   savedWord: {
