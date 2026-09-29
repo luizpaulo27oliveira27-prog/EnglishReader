@@ -58,6 +58,9 @@ const SAVED_WORDS_KEY = '@englishreader_saved_words';
 export default function HomeScreen() {
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
   const [savedWords, setSavedWords] = useState<string[]>([]);
+  const [reviewActive, setReviewActive] = useState(false);
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [reviewAnswer, setReviewAnswer] = useState<string | null>(null);
 
   useEffect(() => {
     loadSavedWords();
@@ -110,6 +113,17 @@ export default function HomeScreen() {
   const isSaved = selectedWord
     ? savedWords.includes(selectedWord.word)
     : false;
+
+  const startReview = () => {
+    if (savedWords.length === 0) {
+      alert('Salve algumas palavras antes de começar a revisão!');
+      return;
+    }
+
+    setReviewIndex(0);
+    setReviewAnswer(null);
+    setReviewActive(true);
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -285,10 +299,92 @@ export default function HomeScreen() {
             </ThemedView>
           )}
 
+          {reviewActive && savedWords.length > 0 && (
+            <ThemedView style={styles.dictionaryBox}>
+              <ThemedText type="subtitle">
+                🧠 Revisão de inglês
+              </ThemedText>
+
+              <ThemedText>
+                Palavra {reviewIndex + 1} de {savedWords.length}
+              </ThemedText>
+
+              <ThemedText type="title">
+                What does "{words[savedWords[reviewIndex]].word}" mean?
+              </ThemedText>
+
+              {savedWords.map((word) => (
+                <Pressable
+                  key={word}
+                  onPress={() => setReviewAnswer(words[word].meaning)}
+                  style={styles.saveButton}
+                >
+                  <ThemedText>
+                    {reviewAnswer === words[word].meaning ? '🔘 ' : '⚪ '}
+                    {words[word].meaning}
+                  </ThemedText>
+                </Pressable>
+              ))}
+
+              <Pressable
+                onPress={() => {
+                  if (reviewAnswer === null) {
+                    alert('Escolha uma resposta primeiro!');
+                    return;
+                  }
+
+                  const correctAnswer =
+                    words[savedWords[reviewIndex]].meaning;
+
+                  if (reviewAnswer === correctAnswer) {
+                    alert('Correct! Muito bem! 🎉');
+                  } else {
+                    alert(`A resposta correta é: ${correctAnswer}`);
+                  }
+
+                  if (reviewIndex + 1 < savedWords.length) {
+                    setReviewIndex(reviewIndex + 1);
+                    setReviewAnswer(null);
+                  } else {
+                    setReviewActive(false);
+                    setReviewAnswer(null);
+                    alert('Revisão concluída! Parabéns! 🏆');
+                  }
+                }}
+                style={styles.audioButton}
+              >
+                <ThemedText>
+                  Conferir resposta ➜
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setReviewActive(false);
+                  setReviewAnswer(null);
+                }}
+                style={styles.saveButton}
+              >
+                <ThemedText>
+                  Sair da revisão
+                </ThemedText>
+              </Pressable>
+            </ThemedView>
+          )}
+
           <ThemedView style={styles.savedBox}>
             <ThemedText type="subtitle">
               📚 Minhas palavras
             </ThemedText>
+
+            <Pressable
+              onPress={startReview}
+              style={styles.saveButton}
+            >
+              <ThemedText>
+                🧠 Revisar minhas palavras
+              </ThemedText>
+            </Pressable>
 
             {savedWords.length === 0 ? (
               <ThemedText>
