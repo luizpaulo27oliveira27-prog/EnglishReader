@@ -61,6 +61,8 @@ export default function HomeScreen() {
   const [reviewActive, setReviewActive] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [reviewAnswer, setReviewAnswer] = useState<string | null>(null);
+  const [reviewScore, setReviewScore] = useState(0);
+  const [reviewOptions, setReviewOptions] = useState<string[]>([]);
 
   useEffect(() => {
     loadSavedWords();
@@ -114,6 +116,23 @@ export default function HomeScreen() {
     ? savedWords.includes(selectedWord.word)
     : false;
 
+  const generateReviewOptions = (correctMeaning: string) => {
+    const otherMeanings = Object.values(words)
+      .map((word) => word.meaning)
+      .filter((meaning) => meaning !== correctMeaning);
+
+    const shuffledMeanings = otherMeanings.sort(
+      () => Math.random() - 0.5
+    );
+
+    const options = [
+      correctMeaning,
+      ...shuffledMeanings.slice(0, 3),
+    ];
+
+    return options.sort(() => Math.random() - 0.5);
+  };
+
   const startReview = () => {
     if (savedWords.length === 0) {
       alert('Salve algumas palavras antes de começar a revisão!');
@@ -121,7 +140,12 @@ export default function HomeScreen() {
     }
 
     setReviewIndex(0);
+    setReviewScore(0);
     setReviewAnswer(null);
+
+    const firstWord = words[savedWords[0]];
+    setReviewOptions(generateReviewOptions(firstWord.meaning));
+
     setReviewActive(true);
   };
 
@@ -313,15 +337,15 @@ export default function HomeScreen() {
                 What does "{words[savedWords[reviewIndex]].word}" mean?
               </ThemedText>
 
-              {savedWords.map((word) => (
+              {reviewOptions.map((option) => (
                 <Pressable
-                  key={word}
-                  onPress={() => setReviewAnswer(words[word].meaning)}
+                  key={option}
+                  onPress={() => setReviewAnswer(option)}
                   style={styles.saveButton}
                 >
                   <ThemedText>
-                    {reviewAnswer === words[word].meaning ? '🔘 ' : '⚪ '}
-                    {words[word].meaning}
+                    {reviewAnswer === option ? '🔘 ' : '⚪ '}
+                    {option}
                   </ThemedText>
                 </Pressable>
               ))}
@@ -336,19 +360,35 @@ export default function HomeScreen() {
                   const correctAnswer =
                     words[savedWords[reviewIndex]].meaning;
 
-                  if (reviewAnswer === correctAnswer) {
+                  const isCorrect = reviewAnswer === correctAnswer;
+
+                  if (isCorrect) {
+                    setReviewScore((score) => score + 1);
                     alert('Correct! Muito bem! 🎉');
                   } else {
                     alert(`A resposta correta é: ${correctAnswer}`);
                   }
 
                   if (reviewIndex + 1 < savedWords.length) {
-                    setReviewIndex(reviewIndex + 1);
+                    const nextIndex = reviewIndex + 1;
+
+                    setReviewIndex(nextIndex);
                     setReviewAnswer(null);
+                    setReviewOptions(
+                      generateReviewOptions(
+                        words[savedWords[nextIndex]].meaning
+                      )
+                    );
                   } else {
+                    const finalScore =
+                      reviewScore + (isCorrect ? 1 : 0);
+
                     setReviewActive(false);
                     setReviewAnswer(null);
-                    alert('Revisão concluída! Parabéns! 🏆');
+
+                    alert(
+                      `Revisão concluída! Você acertou ${finalScore} de ${savedWords.length} perguntas! 🏆`
+                    );
                   }
                 }}
                 style={styles.audioButton}
