@@ -63,6 +63,7 @@ export default function HomeScreen() {
   const [reviewAnswer, setReviewAnswer] = useState<string | null>(null);
   const [reviewScore, setReviewScore] = useState(0);
   const [reviewOptions, setReviewOptions] = useState<string[]>([]);
+  const [reviewFinished, setReviewFinished] = useState(false);
 
   useEffect(() => {
     loadSavedWords();
@@ -141,6 +142,7 @@ export default function HomeScreen() {
 
     setReviewIndex(0);
     setReviewScore(0);
+    setReviewFinished(false);
     setReviewAnswer(null);
 
     const firstWord = words[savedWords[0]];
@@ -385,10 +387,8 @@ export default function HomeScreen() {
 
                     setReviewActive(false);
                     setReviewAnswer(null);
-
-                    alert(
-                      `Revisão concluída! Você acertou ${finalScore} de ${savedWords.length} perguntas! 🏆`
-                    );
+                    setReviewScore(finalScore);
+                    setReviewFinished(true);
                   }
                 }}
                 style={styles.audioButton}
@@ -412,6 +412,40 @@ export default function HomeScreen() {
             </ThemedView>
           )}
 
+          {reviewFinished && savedWords.length > 0 && (
+            <ThemedView style={styles.dictionaryBox}>
+              <ThemedText type="subtitle">
+                🏆 Revisão concluída!
+              </ThemedText>
+
+              <ThemedText type="title">
+                {reviewScore} de {savedWords.length} acertos
+              </ThemedText>
+
+              <ThemedText>
+                Você acertou{' '}
+                {Math.round((reviewScore / savedWords.length) * 100)}% das perguntas.
+              </ThemedText>
+
+              <Pressable
+                onPress={startReview}
+                style={styles.saveButton}
+              >
+                <ThemedText>
+                  🔄 Tentar novamente
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setReviewFinished(false)}
+                style={styles.saveButton}
+              >
+                <ThemedText>
+                  📚 Voltar às palavras salvas
+                </ThemedText>
+              </Pressable>
+            </ThemedView>
+          )}
           <ThemedView style={styles.savedBox}>
             <ThemedText type="subtitle">
               📚 Minhas palavras
