@@ -14,6 +14,15 @@ type Word = {
   example: string;
 };
 
+
+type Story = {
+  id: string;
+  title: string;
+  level: string;
+  words: string[];
+  paragraphs: string[];
+};
+
 const words: Record<string, Word> = {
   walk: {
     word: 'walk',
@@ -51,12 +60,86 @@ const words: Record<string, Word> = {
     pronunciation: 'indjói-ing',
     example: 'They are enjoying the afternoon.',
   },
+  morning: {
+    word: 'morning',
+    meaning: 'manhã',
+    pronunciation: 'mór-ning',
+    example: 'I wake up early every morning.',
+  },
+  breakfast: {
+    word: 'breakfast',
+    meaning: 'café da manhã',
+    pronunciation: 'brék-fast',
+    example: 'I make breakfast every day.',
+  },
+  coffee: {
+    word: 'coffee',
+    meaning: 'café (bebida)',
+    pronunciation: 'kó-fi',
+    example: 'I drink a cup of coffee.',
+  },
+  quickly: {
+    word: 'quickly',
+    meaning: 'rapidamente',
+    pronunciation: 'kuík-li',
+    example: 'I get dressed quickly.',
+  },
+  ready: {
+    word: 'ready',
+    meaning: 'pronto / pronta',
+    pronunciation: 'ré-di',
+    example: 'Everything is ready.',
+  },
 };
 
 const SAVED_WORDS_KEY = '@englishreader_saved_words';
 
+const stories: Story[] = [
+  {
+    id: 'walk-in-the-park',
+    title: 'A Walk in the Park',
+    level: 'LEVEL A1 · BEGINNER',
+    words: [
+      'walk',
+      'weather',
+      'beautiful',
+      'quiet',
+      'noticed',
+      'enjoying',
+    ],
+    paragraphs: [
+      'Yesterday, I decided to take a walk through the park.',
+      'The weather was beautiful, and the streets were quiet.',
+      'I noticed many people enjoying the afternoon.',
+      'Some people were reading books, while others were talking with their friends.',
+      'I sat under a tree and watched the world around me.',
+    ],
+  },
+  {
+    id: 'busy-morning',
+    title: 'A Busy Morning',
+    level: 'LEVEL A1 · BEGINNER',
+    words: [
+      'morning',
+      'breakfast',
+      'coffee',
+      'quickly',
+      'ready',
+    ],
+    paragraphs: [
+      'Every morning, I wake up early.',
+      'I make breakfast and drink a cup of coffee.',
+      'Then, I get dressed quickly.',
+      'I check my bag and make sure everything is ready.',
+      'Finally, I leave home and start my day.',
+    ],
+  },
+];
+
+
 export default function HomeScreen() {
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
+  const [currentStory, setCurrentStory] = useState<Story>(stories[0]);
   const [savedWords, setSavedWords] = useState<string[]>([]);
   const [reviewActive, setReviewActive] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
@@ -168,118 +251,80 @@ export default function HomeScreen() {
 
           <ThemedView style={styles.levelBox}>
             <ThemedText type="small">
-              LEVEL A1 · BEGINNER
+              {currentStory.level}
             </ThemedText>
           </ThemedView>
 
           <ThemedText type="title" style={styles.storyTitle}>
-            A Walk in the Park
+            {currentStory.title}
           </ThemedText>
 
-          <ThemedView style={styles.paragraph}>
-            <ThemedText style={styles.storyText}>
-              Yesterday, I decided to take a
-            </ThemedText>
-
-            <Pressable
-              onPress={() => selectWord('walk')}
-              style={styles.inlineWord}
-            >
-              <ThemedText style={styles.word}>
-                walk
-              </ThemedText>
-            </Pressable>
-
-            <ThemedText style={styles.storyText}>
-              through the park.
-            </ThemedText>
+          <ThemedView style={styles.storySelector}>
+            {stories.map((story) => (
+              <Pressable
+                key={story.id}
+                onPress={() => {
+                  setCurrentStory(story);
+                  setSelectedWord(null);
+                  setReviewActive(false);
+                  setReviewFinished(false);
+                }}
+                style={[
+                  styles.storyButton,
+                  currentStory.id === story.id &&
+                  styles.storyButtonActive,
+                ]}
+              >
+                <ThemedText style={styles.storyButtonText}>
+                  {story.title}
+                </ThemedText>
+              </Pressable>
+            ))}
           </ThemedView>
 
-          <ThemedView style={styles.paragraph}>
-            <ThemedText style={styles.storyText}>
-              The
-            </ThemedText>
-
-            <Pressable
-              onPress={() => selectWord('weather')}
-              style={styles.inlineWord}
+          {currentStory.paragraphs.map((paragraph, paragraphIndex) => (
+            <ThemedView
+              key={paragraphIndex}
+              style={styles.paragraph}
             >
-              <ThemedText style={styles.word}>
-                weather
-              </ThemedText>
-            </Pressable>
+              {paragraph
+                .split(
+                  new RegExp(
+                    `(\\b(?:${currentStory.words.join('|')})\\b)`,
+                    'gi'
+                  )
+                )
+                .map((part, partIndex) => {
+                  const wordKey = part.toLowerCase();
 
-            <ThemedText style={styles.storyText}>
-              was
-            </ThemedText>
+                  if (
+                    currentStory.words.includes(wordKey) &&
+                    words[wordKey]
+                  ) {
+                    return (
+                      <Pressable
+                        key={partIndex}
+                        onPress={() => selectWord(wordKey)}
+                        style={styles.inlineWord}
+                      >
+                        <ThemedText style={styles.word}>
+                          {part}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  }
 
-            <Pressable
-              onPress={() => selectWord('beautiful')}
-              style={styles.inlineWord}
-            >
-              <ThemedText style={styles.word}>
-                beautiful
-              </ThemedText>
-            </Pressable>
-
-            <ThemedText style={styles.storyText}>
-              , and the streets were
-            </ThemedText>
-
-            <Pressable
-              onPress={() => selectWord('quiet')}
-              style={styles.inlineWord}
-            >
-              <ThemedText style={styles.word}>
-                quiet
-              </ThemedText>
-            </Pressable>
-
-            <ThemedText style={styles.storyText}>
-              .
-            </ThemedText>
-          </ThemedView>
-
-          <ThemedView style={styles.paragraph}>
-            <ThemedText style={styles.storyText}>
-              I
-            </ThemedText>
-
-            <Pressable
-              onPress={() => selectWord('noticed')}
-              style={styles.inlineWord}
-            >
-              <ThemedText style={styles.word}>
-                noticed
-              </ThemedText>
-            </Pressable>
-
-            <ThemedText style={styles.storyText}>
-              many people
-            </ThemedText>
-
-            <Pressable
-              onPress={() => selectWord('enjoying')}
-              style={styles.inlineWord}
-            >
-              <ThemedText style={styles.word}>
-                enjoying
-              </ThemedText>
-            </Pressable>
-
-            <ThemedText style={styles.storyText}>
-              the afternoon.
-            </ThemedText>
-          </ThemedView>
-
-          <ThemedText style={styles.storyText}>
-            Some people were reading books, while others were talking
-            with their friends.
-          </ThemedText>
-
-          <ThemedText style={styles.storyText}>
-            I sat under a tree and watched the world around me.
-          </ThemedText>
+                  return (
+                    <ThemedText
+                      key={partIndex}
+                      style={styles.storyText}
+                    >
+                      {part}
+                    </ThemedText>
+                  );
+                })}
+            </ThemedView>
+          ))}
 
           {selectedWord && (
             <ThemedView style={styles.dictionaryBox}>
@@ -563,6 +608,25 @@ const styles = StyleSheet.create({
 
   storyTitle: {
     marginBottom: 24,
+  },
+
+  storySelector: {
+    gap: 10,
+    marginBottom: 24,
+  },
+  storyButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#888888',
+  },
+  storyButtonActive: {
+    backgroundColor: '#DCEBFF',
+    borderColor: '#3973C6',
+  },
+  storyButtonText: {
+    fontSize: 16,
   },
 
   paragraph: {
