@@ -90,6 +90,36 @@ const words: Record<string, Word> = {
     pronunciation: 'ré-di',
     example: 'Everything is ready.',
   },
+  supermarket: {
+    word: 'supermarket',
+    meaning: 'supermercado',
+    pronunciation: 'sú-per-már-kit',
+    example: 'I go to the supermarket.',
+  },
+  price: {
+    word: 'price',
+    meaning: 'preço',
+    pronunciation: 'práis',
+    example: 'What is the price?',
+  },
+  cheap: {
+    word: 'cheap',
+    meaning: 'barato / barata',
+    pronunciation: 'tchíp',
+    example: 'These apples are cheap.',
+  },
+  expensive: {
+    word: 'expensive',
+    meaning: 'caro / cara',
+    pronunciation: 'ik-spén-siv',
+    example: 'This bag is expensive.',
+  },
+  buy: {
+    word: 'buy',
+    meaning: 'comprar',
+    pronunciation: 'bái',
+    example: 'I want to buy some bread.',
+  },
 };
 
 const SAVED_WORDS_KEY = '@englishreader_saved_words';
@@ -132,6 +162,26 @@ const stories: Story[] = [
       'Then, I get dressed quickly.',
       'I check my bag and make sure everything is ready.',
       'Finally, I leave home and start my day.',
+    ],
+
+  },
+  {
+    id: 'at-the-supermarket',
+    title: 'At the Supermarket',
+    level: 'LEVEL A1 · BEGINNER',
+    words: [
+      'supermarket',
+      'price',
+      'cheap',
+      'expensive',
+      'buy',
+    ],
+    paragraphs: [
+      'Today, I go to the supermarket to buy some food.',
+      'I need milk, bread, eggs, and apples.',
+      'I check the price of each product.',
+      'Some products are cheap, but others are expensive.',
+      'I choose what I need and pay at the checkout.',
     ],
   },
 ];
