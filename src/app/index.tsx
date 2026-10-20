@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Speech from 'expo-speech';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -188,6 +188,8 @@ const stories: Story[] = [
 
 
 export default function HomeScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
   const [currentStory, setCurrentStory] = useState<Story>(stories[0]);
   const [savedWords, setSavedWords] = useState<string[]>([]);
@@ -321,8 +323,13 @@ export default function HomeScreen() {
                 }}
                 style={[
                   styles.storyButton,
-                  currentStory.id === story.id &&
-                  styles.storyButtonActive,
+                  currentStory.id === story.id && [
+                    styles.storyButtonActive,
+                    {
+                      backgroundColor: isDark ? '#26364A' : '#DCEBFF',
+                      borderColor: isDark ? '#668DB8' : '#3973C6',
+                    },
+                  ],
                 ]}
               >
                 <ThemedText style={styles.storyButtonText}>
@@ -355,7 +362,13 @@ export default function HomeScreen() {
                       <Pressable
                         key={partIndex}
                         onPress={() => selectWord(wordKey)}
-                        style={styles.inlineWord}
+                        style={[
+                          styles.inlineWord,
+                          {
+                            backgroundColor: isDark ? '#293747' : '#EAF2FF',
+                            borderColor: isDark ? '#465A70' : '#C5D9F5',
+                          },
+                        ]}
                       >
                         <ThemedText style={styles.word}>
                           {part}
@@ -671,10 +684,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#888888',
   },
+
   storyButtonActive: {
     backgroundColor: '#DCEBFF',
     borderColor: '#3973C6',
   },
+
   storyButtonText: {
     fontSize: 16,
   },
@@ -694,12 +709,17 @@ const styles = StyleSheet.create({
 
   inlineWord: {
     marginHorizontal: 3,
+    borderRadius: 5,
+    backgroundColor: '#EAF2FF',
+    borderWidth: 1,
+    borderColor: '#C5D9F5',
+    paddingHorizontal: 2,
   },
 
   word: {
     fontSize: 20,
     lineHeight: 34,
-    textDecorationLine: 'underline',
+    color: '#2457A7',
   },
 
   dictionaryBox: {
