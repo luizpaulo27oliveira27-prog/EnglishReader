@@ -231,6 +231,15 @@ export default function HomeScreen() {
     setSelectedWord(words[word]);
   };
 
+  const removeSavedWord = async (word: string) => {
+    const newSavedWords = savedWords.filter(
+      (savedWord) => savedWord !== word
+    );
+
+    setSavedWords(newSavedWords);
+    await saveWordsToStorage(newSavedWords);
+  };
+
   const toggleSavedWord = async () => {
     if (!selectedWord) return;
 
@@ -582,22 +591,23 @@ export default function HomeScreen() {
                   const savedWord = words[word];
 
                   return (
-                    <Pressable
+                    <ThemedView
                       key={word}
-                      onPress={() => selectWord(word)}
                       style={styles.savedWordButton}
                     >
-                      <ThemedText style={styles.savedWord}>
-                        ⭐ {savedWord.word}
-                      </ThemedText>
+                      <Pressable onPress={() => selectWord(word)}>
+                        <ThemedText style={styles.savedWord}>
+                          ⭐ {savedWord.word}
+                        </ThemedText>
 
-                      <ThemedText style={styles.savedWordMeaning}>
-                        {savedWord.meaning}
-                      </ThemedText>
+                        <ThemedText style={styles.savedWordMeaning}>
+                          {savedWord.meaning}
+                        </ThemedText>
 
-                      <ThemedText style={styles.savedWordPronunciation}>
-                        / {savedWord.pronunciation} /
-                      </ThemedText>
+                        <ThemedText style={styles.savedWordPronunciation}>
+                          / {savedWord.pronunciation} /
+                        </ThemedText>
+                      </Pressable>
 
                       <Pressable
                         onPress={() =>
@@ -609,7 +619,16 @@ export default function HomeScreen() {
                           🔊 Ouvir
                         </ThemedText>
                       </Pressable>
-                    </Pressable>
+
+                      <Pressable
+                        onPress={() => removeSavedWord(word)}
+                        style={styles.savedWordAudioButton}
+                      >
+                        <ThemedText>
+                          🗑️ Remover
+                        </ThemedText>
+                      </Pressable>
+                    </ThemedView>
                   );
                 })}
               </>
