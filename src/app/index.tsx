@@ -1,7 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Speech from 'expo-speech';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, useColorScheme } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  useColorScheme,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -193,6 +199,10 @@ export default function HomeScreen() {
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
   const [currentStory, setCurrentStory] = useState<Story>(stories[0]);
   const [savedWords, setSavedWords] = useState<string[]>([]);
+  const [searchSavedWords, setSearchSavedWords] = useState('');
+  const filteredSavedWords = savedWords.filter((word) =>
+    word.toLowerCase().includes(searchSavedWords.trim().toLowerCase())
+  );
   const [reviewActive, setReviewActive] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [reviewAnswer, setReviewAnswer] = useState<string | null>(null);
@@ -568,6 +578,14 @@ export default function HomeScreen() {
               📚 Minhas palavras
             </ThemedText>
 
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar palavra salva..."
+              value={searchSavedWords}
+              onChangeText={setSearchSavedWords}
+              autoCapitalize="none"
+            />
+
             <Pressable
               onPress={startReview}
               style={styles.saveButton}
@@ -587,7 +605,13 @@ export default function HomeScreen() {
                   {savedWords.length} palavra(s) salva(s).
                 </ThemedText>
 
-                {savedWords.map((word) => {
+                {searchSavedWords.trim() !== '' && filteredSavedWords.length === 0 && (
+                  <ThemedText>
+                    Nenhuma palavra encontrada.
+                  </ThemedText>
+                )}
+
+                {filteredSavedWords.map((word) => {
                   const savedWord = words[word];
 
                   return (
@@ -654,6 +678,17 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#999',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+    marginBottom: 12,
+    color: '#000',
+    backgroundColor: '#fff',
   },
 
   safeArea: {
