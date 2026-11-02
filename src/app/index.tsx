@@ -20,14 +20,33 @@ type Word = {
   example: string;
 };
 
+type EnglishLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 
 type Story = {
   id: string;
   title: string;
-  level: string;
+  level: EnglishLevel;
   words: string[];
   paragraphs: string[];
 };
+
+const levelNames: Record<EnglishLevel, string> = {
+  A1: 'Iniciante',
+  A2: 'Básico',
+  B1: 'Intermediário',
+  B2: 'Intermediário superior',
+  C1: 'Avançado',
+  C2: 'Domínio pleno',
+};
+
+const englishLevels: EnglishLevel[] = [
+  'A1',
+  'A2',
+  'B1',
+  'B2',
+  'C1',
+  'C2',
+];
 
 const words: Record<string, Word> = {
   walk: {
@@ -134,7 +153,7 @@ const stories: Story[] = [
   {
     id: 'walk-in-the-park',
     title: 'A Walk in the Park',
-    level: 'LEVEL A1 · BEGINNER',
+    level: 'A1',
     words: [
       'walk',
       'weather',
@@ -154,7 +173,7 @@ const stories: Story[] = [
   {
     id: 'busy-morning',
     title: 'A Busy Morning',
-    level: 'LEVEL A1 · BEGINNER',
+    level: 'A1',
     words: [
       'morning',
       'breakfast',
@@ -174,7 +193,7 @@ const stories: Story[] = [
   {
     id: 'at-the-supermarket',
     title: 'At the Supermarket',
-    level: 'LEVEL A1 · BEGINNER',
+    level: 'A1',
     words: [
       'supermarket',
       'price',
@@ -198,6 +217,28 @@ export default function HomeScreen() {
   const isDark = colorScheme === 'dark';
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
   const [currentStory, setCurrentStory] = useState<Story>(stories[0]);
+  const [selectedLevel, setSelectedLevel] = useState<EnglishLevel>('A1');
+  const filteredStories = stories.filter(
+    (story) => story.level === selectedLevel
+  );
+  const selectLevel = (level: EnglishLevel) => {
+    setSelectedLevel(level);
+
+    const levelStories = stories.filter(
+      (story) => story.level === level
+    );
+
+    if (levelStories.length > 0) {
+      setCurrentStory(levelStories[0]);
+      setSelectedWord(null);
+    }
+
+    setReviewActive(false);
+    setReviewFinished(false);
+  };
+  const getLevelStoryCount = (level: EnglishLevel) => {
+    return stories.filter((story) => story.level === level).length;
+  };
   const [savedWords, setSavedWords] = useState<string[]>([]);
   const [searchSavedWords, setSearchSavedWords] = useState('');
   const filteredSavedWords = savedWords.filter((word) =>
@@ -320,93 +361,199 @@ export default function HomeScreen() {
             Read. Learn. Remember.
           </ThemedText>
 
-          <ThemedView style={styles.levelBox}>
-            <ThemedText type="small">
-              {currentStory.level}
-            </ThemedText>
+          <ThemedView
+            style={{
+              flexDirection: 'row',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              marginBottom: 24,
+            }}
+          >
+            {englishLevels.map((level) => {
+              const levelColor =
+                level === 'A1' || level === 'A2'
+                  ? '#279B68'
+                  : level === 'B1' || level === 'B2'
+                    ? '#3986D7'
+                    : '#9A6BD6';
+
+              const isSelected = selectedLevel === level;
+              const storyCount = getLevelStoryCount(level);
+
+              return (
+                <Pressable
+                  key={level}
+                  onPress={() => selectLevel(level)}
+                  style={{
+                    width: '48%',
+                    padding: 14,
+                    marginBottom: 12,
+                    borderRadius: 14,
+                    borderWidth: 2,
+                    borderColor: levelColor,
+                    backgroundColor: isSelected
+                      ? levelColor
+                      : isDark
+                        ? '#202B36'
+                        : '#FFFFFF',
+                  }}
+                >
+                  <ThemedText
+                    style={{
+                      fontSize: 22,
+                      fontWeight: 'bold',
+                      color: isSelected
+                        ? '#FFFFFF'
+                        : levelColor,
+                    }}
+                  >
+                    {level}
+                  </ThemedText>
+
+                  <ThemedText
+                    style={{
+                      fontSize: 13,
+                      color: isSelected
+                        ? '#FFFFFF'
+                        : undefined,
+                    }}
+                  >
+                    {levelNames[level]}
+                  </ThemedText>
+
+                  <ThemedText
+                    style={{
+                      fontSize: 11,
+                      marginTop: 6,
+                      color: isSelected
+                        ? '#FFFFFF'
+                        : undefined,
+                    }}
+                  >
+                    {storyCount > 0
+                      ? `${storyCount} histórias`
+                      : 'Em breve'}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
           </ThemedView>
 
-          <ThemedText type="title" style={styles.storyTitle}>
-            {currentStory.title}
-          </ThemedText>
-
-          <ThemedView style={styles.storySelector}>
-            {stories.map((story) => (
-              <Pressable
-                key={story.id}
-                onPress={() => {
-                  setCurrentStory(story);
-                  setSelectedWord(null);
-                  setReviewActive(false);
-                  setReviewFinished(false);
-                }}
-                style={[
-                  styles.storyButton,
-                  currentStory.id === story.id && [
-                    styles.storyButtonActive,
-                    {
-                      backgroundColor: isDark ? '#26364A' : '#DCEBFF',
-                      borderColor: isDark ? '#668DB8' : '#3973C6',
-                    },
-                  ],
-                ]}
-              >
-                <ThemedText style={styles.storyButtonText}>
-                  {story.title}
+          {filteredStories.length > 0 ? (
+            <>
+              <ThemedView style={styles.levelBox}>
+                <ThemedText type="small">
+                  {currentStory.level} · {levelNames[currentStory.level]}
                 </ThemedText>
-              </Pressable>
-            ))}
-          </ThemedView>
+              </ThemedView>
 
-          {currentStory.paragraphs.map((paragraph, paragraphIndex) => (
-            <ThemedView
-              key={paragraphIndex}
-              style={styles.paragraph}
-            >
-              {paragraph
-                .split(
-                  new RegExp(
-                    `(\\b(?:${currentStory.words.join('|')})\\b)`,
-                    'gi'
-                  )
-                )
-                .map((part, partIndex) => {
-                  const wordKey = part.toLowerCase();
+              <ThemedText type="title" style={styles.storyTitle}>
+                {currentStory.title}
+              </ThemedText>
 
-                  if (
-                    currentStory.words.includes(wordKey) &&
-                    words[wordKey]
-                  ) {
-                    return (
-                      <Pressable
-                        key={partIndex}
-                        onPress={() => selectWord(wordKey)}
-                        style={[
-                          styles.inlineWord,
-                          {
-                            backgroundColor: isDark ? '#293747' : '#EAF2FF',
-                            borderColor: isDark ? '#465A70' : '#C5D9F5',
-                          },
-                        ]}
-                      >
-                        <ThemedText style={styles.word}>
+              <ThemedView style={styles.storySelector}>
+                {filteredStories.map((story) => (
+                  <Pressable
+                    key={story.id}
+                    onPress={() => {
+                      setCurrentStory(story);
+                      setSelectedWord(null);
+                      setReviewActive(false);
+                      setReviewFinished(false);
+                    }}
+                    style={[
+                      styles.storyButton,
+                      currentStory.id === story.id && [
+                        styles.storyButtonActive,
+                        {
+                          backgroundColor: isDark ? '#26364A' : '#DCEBFF',
+                          borderColor: isDark ? '#668DB8' : '#3973C6',
+                        },
+                      ],
+                    ]}
+                  >
+                    <ThemedText style={styles.storyButtonText}>
+                      {story.title}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+              </ThemedView>
+
+              {currentStory.paragraphs.map((paragraph, paragraphIndex) => (
+                <ThemedView
+                  key={paragraphIndex}
+                  style={styles.paragraph}
+                >
+                  {paragraph
+                    .split(
+                      new RegExp(
+                        `(\\b(?:${currentStory.words.join('|')})\\b)`,
+                        'gi'
+                      )
+                    )
+                    .map((part, partIndex) => {
+                      const wordKey = part.toLowerCase();
+
+                      if (
+                        currentStory.words.includes(wordKey) &&
+                        words[wordKey]
+                      ) {
+                        return (
+                          <Pressable
+                            key={partIndex}
+                            onPress={() => selectWord(wordKey)}
+                            style={[
+                              styles.inlineWord,
+                              {
+                                backgroundColor: isDark ? '#293747' : '#EAF2FF',
+                                borderColor: isDark ? '#465A70' : '#C5D9F5',
+                              },
+                            ]}
+                          >
+                            <ThemedText style={styles.word}>
+                              {part}
+                            </ThemedText>
+                          </Pressable>
+                        );
+                      }
+
+                      return (
+                        <ThemedText
+                          key={partIndex}
+                          style={styles.storyText}
+                        >
                           {part}
                         </ThemedText>
-                      </Pressable>
-                    );
-                  }
+                      );
+                    })}
+                </ThemedView>
+              ))}
+            </>
+          ) : (
+            <ThemedView
+              style={{
+                padding: 24,
+                borderRadius: 14,
+                alignItems: 'center',
+                marginBottom: 24,
+                backgroundColor: isDark ? '#202B36' : '#F0F4F8',
+              }}
+            >
+              <ThemedText
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  marginBottom: 8,
+                }}
+              >
+                Conteúdo em breve
+              </ThemedText>
 
-                  return (
-                    <ThemedText
-                      key={partIndex}
-                      style={styles.storyText}
-                    >
-                      {part}
-                    </ThemedText>
-                  );
-                })}
+              <ThemedText style={{ textAlign: 'center' }}>
+                Estamos preparando novas histórias para este nível.
+              </ThemedText>
             </ThemedView>
-          ))}
+          )}
 
           {selectedWord && (
             <ThemedView style={styles.dictionaryBox}>
