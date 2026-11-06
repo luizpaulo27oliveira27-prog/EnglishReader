@@ -145,6 +145,78 @@ const words: Record<string, Word> = {
     pronunciation: 'bái',
     example: 'I want to buy some bread.',
   },
+  countryside: {
+    word: 'countryside',
+    meaning: 'campo / zona rural',
+    pronunciation: 'kân-tri-sáid',
+    example: 'My grandparents live in the countryside.',
+  },
+  grandparents: {
+    word: 'grandparents',
+    meaning: 'avós',
+    pronunciation: 'grând-pé-rents',
+    example: 'I visited my grandparents last weekend.',
+  },
+  arrived: {
+    word: 'arrived',
+    meaning: 'chegou / chegaram',
+    pronunciation: 'a-ráivd',
+    example: 'We arrived at the farm in the morning.',
+  },
+  journey: {
+    word: 'journey',
+    meaning: 'viagem / percurso',
+    pronunciation: 'djâr-ni',
+    example: 'The journey was long but beautiful.',
+  },
+  decided: {
+    word: 'decided',
+    meaning: 'decidiu / decidiram',
+    pronunciation: 'di-sái-did',
+    example: 'We decided to stay another day.',
+  },
+  peaceful: {
+    word: 'peaceful',
+    meaning: 'tranquilo / pacífico',
+    pronunciation: 'píss-fol',
+    example: 'The countryside is peaceful and quiet.',
+  },
+  fresh: {
+    word: 'fresh',
+    meaning: 'fresco / fresca',
+    pronunciation: 'frésh',
+    example: 'We had fresh fruit for breakfast.',
+  },
+  collected: {
+    word: 'collected',
+    meaning: 'recolheu / colheram',
+    pronunciation: 'ko-lék-tid',
+    example: 'We collected vegetables from the garden.',
+  },
+  vegetables: {
+    word: 'vegetables',
+    meaning: 'vegetais / legumes',
+    pronunciation: 'védj-ta-bols',
+    example: 'Fresh vegetables are good for your health.',
+  },
+  although: {
+    word: 'although',
+    meaning: 'embora / apesar de que',
+    pronunciation: 'ól-dhôu',
+    example: 'Although it was cold, we went outside.',
+  },
+  spent: {
+    word: 'spent',
+    meaning: 'passou / passaram (tempo)',
+    pronunciation: 'spént',
+    example: 'We spent the weekend together.',
+  },
+  returned: {
+    word: 'returned',
+    meaning: 'retornou / voltaram',
+    pronunciation: 'ri-târnd',
+    example: 'We returned home on Sunday.',
+  },
 };
 
 const SAVED_WORDS_KEY = '@englishreader_saved_words';
@@ -207,6 +279,34 @@ const stories: Story[] = [
       'I check the price of each product.',
       'Some products are cheap, but others are expensive.',
       'I choose what I need and pay at the checkout.',
+    ],
+  },
+  {
+    id: 'weekend-in-the-countryside',
+    title: 'A Weekend in the Countryside',
+    level: 'A2',
+    words: [
+      'countryside',
+      'grandparents',
+      'arrived',
+      'journey',
+      'decided',
+      'peaceful',
+      'fresh',
+      'collected',
+      'vegetables',
+      'although',
+      'spent',
+      'returned',
+    ],
+    paragraphs: [
+      'Last Friday, my family and I decided to spend the weekend in the countryside.',
+      'We visited my grandparents, who live on a small farm far from the city.',
+      'The journey took three hours, but we enjoyed the beautiful views along the way. We arrived just before sunset.',
+      'The farm was peaceful, and the air was fresh. On Saturday morning, my grandfather showed us his garden.',
+      'We collected vegetables together and prepared a delicious lunch. Although the work was tiring, it was a lot of fun.',
+      'In the afternoon, we walked near the river and talked about our childhood memories. We spent the evening with our grandparents.',
+      'On Sunday, we had breakfast together and returned home. It was a wonderful weekend, and we promised to visit again soon.',
     ],
   },
 ];
@@ -487,12 +587,12 @@ export default function HomeScreen() {
                   {paragraph
                     .split(
                       new RegExp(
-                        `(\\b(?:${currentStory.words.join('|')})\\b)`,
+                        `(\\b(?:${currentStory.words.join('|')})\\b[.,!?;:]*)`,
                         'gi'
                       )
                     )
                     .map((part, partIndex) => {
-                      const wordKey = part.toLowerCase();
+                      const wordKey = part.toLowerCase().replace(/[.,!?;:]+$/, '');
 
                       if (
                         currentStory.words.includes(wordKey) &&
