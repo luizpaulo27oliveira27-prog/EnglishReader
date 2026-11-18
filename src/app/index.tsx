@@ -20,6 +20,13 @@ type Word = {
   example: string;
 };
 
+type Expression = {
+  phrase: string;
+  meaning: string;
+  pronunciation: string;
+  example: string;
+};
+
 type EnglishLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 
 type Story = {
@@ -27,6 +34,7 @@ type Story = {
   title: string;
   level: EnglishLevel;
   words: string[];
+  expressions?: string[];
   paragraphs: string[];
 };
 
@@ -409,6 +417,66 @@ const words: Record<string, Word> = {
     pronunciation: 'thrôut',
     example: 'My throat hurts when I swallow.',
   },
+  invite: {
+    word: 'invite',
+    meaning: 'convidar',
+    pronunciation: 'in-váit',
+    example: 'I want to invite my friends to the party.',
+  },
+  available: {
+    word: 'available',
+    meaning: 'disponível',
+    pronunciation: 'a-vêi-la-bol',
+    example: 'Are you available this Saturday?',
+  },
+  concert: {
+    word: 'concert',
+    meaning: 'show / concerto',
+    pronunciation: 'kón-sert',
+    example: 'We are going to a concert tonight.',
+  },
+  movie: {
+    word: 'movie',
+    meaning: 'filme',
+    pronunciation: 'mú-vi',
+    example: 'Would you like to watch a movie?',
+  },
+  join: {
+    word: 'join',
+    meaning: 'juntar-se / participar',
+    pronunciation: 'dj óin',
+    example: 'Would you like to join us?',
+  },
+  suggest: {
+    word: 'suggest',
+    meaning: 'sugerir',
+    pronunciation: 'sâg-djést',
+    example: 'I suggest meeting at seven.',
+  },
+  prefer: {
+    word: 'prefer',
+    meaning: 'preferir',
+    pronunciation: 'pri-fâr',
+    example: 'I prefer going to the cinema.',
+  },
+  meet: {
+    word: 'meet',
+    meaning: 'encontrar-se / conhecer',
+    pronunciation: 'míit',
+    example: "Let's meet at the restaurant.",
+  },
+  cancel: {
+    word: 'cancel',
+    meaning: 'cancelar',
+    pronunciation: 'kén-sel',
+    example: "We don't want to cancel our plans.",
+  },
+  plan: {
+    word: 'plan',
+    meaning: 'plano / planejar',
+    pronunciation: 'plén',
+    example: 'We have a plan for the weekend.',
+  },
   rest: {
     word: 'rest',
     meaning: 'descansar / descanso',
@@ -420,6 +488,33 @@ const words: Record<string, Word> = {
     meaning: 'recuperar-se',
     pronunciation: 'ri-kâ-ver',
     example: 'I hope you recover soon.',
+  },
+};
+
+const expressionDictionary: Record<string, Expression> = {
+  "what's up": {
+    phrase: "What's up?",
+    meaning: 'E aí? / Tudo bem? / O que houve?',
+    pronunciation: 'uóts âp',
+    example: "Hey, James! What's up?",
+  },
+  'would you like to': {
+    phrase: 'Would you like to...?',
+    meaning: 'Você gostaria de...?',
+    pronunciation: 'wud iu láik tu',
+    example: 'Would you like to go to the cinema?',
+  },
+  'that sounds great': {
+    phrase: 'That sounds great!',
+    meaning: 'Isso parece ótimo!',
+    pronunciation: 'dhét sáundz grêit',
+    example: 'That sounds great! What time?',
+  },
+  'how about': {
+    phrase: 'How about...?',
+    meaning: 'Que tal...?',
+    pronunciation: 'háu abáut',
+    example: 'How about seven o’clock?',
   },
 };
 
@@ -600,6 +695,43 @@ const stories: Story[] = [
       'Soon, he began to feel better and hoped to recover completely before the weekend.',
     ],
   },
+  {
+    id: 'making-plans-with-friends',
+    title: 'Making Plans with Friends',
+    level: 'A2',
+    words: [
+      'invite',
+      'available',
+      'concert',
+      'movie',
+      'join',
+      'suggest',
+      'prefer',
+      'meet',
+      'cancel',
+      'plan',
+    ],
+    expressions: [
+      "what's up",
+      'would you like to',
+      'that sounds great',
+      'how about',
+    ],
+    paragraphs: [
+      "Emma sent a message to her friend James on Friday afternoon.",
+      "Emma: Hi, James! What's up?",
+      "James: Not much! How are you?",
+      "Emma: I'm planning to go to the cinema this Saturday. Would you like to join me?",
+      "James: That sounds great! I'm available in the evening.",
+      "Emma: Perfect! How about seven o'clock?",
+      "James: Sounds good! Do you want to watch a comedy movie?",
+      "Emma: I'd prefer an action movie, but a comedy is fine too.",
+      "James: Great! Let's meet in front of the cinema at half past six.",
+      "Emma: Perfect! I'll invite Sarah too. I think she would like to come.",
+      "James: Good idea! We have a plan, then.",
+      "Emma: See you on Saturday!",
+    ],
+  },
 ];
 
 
@@ -607,6 +739,7 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [selectedWord, setSelectedWord] = useState<Word | null>(null);
+  const [selectedExpression, setSelectedExpression] = useState<Expression | null>(null);
   const [currentStory, setCurrentStory] = useState<Story>(stories[0]);
   const [selectedLevel, setSelectedLevel] = useState<EnglishLevel>('A1');
   const filteredStories = stories.filter(
@@ -671,6 +804,12 @@ export default function HomeScreen() {
 
   const selectWord = (word: string) => {
     setSelectedWord(words[word]);
+    setSelectedExpression(null);
+  };
+
+  const selectExpression = (expression: string) => {
+    setSelectedExpression(expressionDictionary[expression]);
+    setSelectedWord(null);
   };
 
   const removeSavedWord = async (word: string) => {
@@ -870,29 +1009,83 @@ export default function HomeScreen() {
                 ))}
               </ThemedView>
 
-              {currentStory.paragraphs.map((paragraph, paragraphIndex) => (
-                <ThemedView
-                  key={paragraphIndex}
-                  style={styles.paragraph}
-                >
-                  {paragraph
-                    .split(
-                      new RegExp(
-                        `(\\b(?:${currentStory.words.join('|')})\\b[.,!?;:]*)`,
-                        'gi'
-                      )
-                    )
-                    .map((part, partIndex) => {
-                      const wordKey = part.toLowerCase().replace(/[.,!?;:]+$/, '');
+              {currentStory.paragraphs.map((paragraph, paragraphIndex) => {
+                const expressionKeys = (currentStory.expressions ?? [])
+                  .map(expression => expression.toLowerCase().replace(/[’‘]/g, "'"))
+                  .filter(expression => expressionDictionary[expression])
+                  .sort((a, b) => b.length - a.length);
+
+                const escapeRegex = (value: string) =>
+                  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+                const expressionPatterns = expressionKeys.map(expression =>
+                  expression
+                    .split(/\s+/)
+                    .map(escapeRegex)
+                    .join('\\s+')
+                );
+
+                const wordPatterns = currentStory.words.map(escapeRegex);
+
+                const clickablePattern = [
+                  ...expressionPatterns,
+                  ...wordPatterns,
+                ].join('|');
+
+                const parts = paragraph.split(
+                  new RegExp(
+                    `(\\b(?:${clickablePattern})\\b[.,!?;:]*)`,
+                    'gi'
+                  )
+                );
+
+                return (
+                  <ThemedView
+                    key={paragraphIndex}
+                    style={styles.paragraph}
+                  >
+                    {parts.map((part, partIndex) => {
+                      const partKey = part
+                        .toLowerCase()
+                        .replace(/[.,!?;:]+$/, '')
+                        .replace(/[’‘]/g, "'")
+                        .replace(/\s+/g, ' ');
+
+                      const expressionKey = expressionKeys.find(
+                        expression => expression === partKey
+                      );
 
                       if (
-                        currentStory.words.includes(wordKey) &&
-                        words[wordKey]
+                        expressionKey &&
+                        expressionDictionary[expressionKey]
                       ) {
                         return (
                           <Pressable
                             key={partIndex}
-                            onPress={() => selectWord(wordKey)}
+                            onPress={() => selectExpression(expressionKey)}
+                            style={[
+                              styles.inlineWord,
+                              {
+                                backgroundColor: isDark ? '#293747' : '#EAF2FF',
+                                borderColor: isDark ? '#465A70' : '#C5D9F5',
+                              },
+                            ]}
+                          >
+                            <ThemedText style={styles.word}>
+                              {part}
+                            </ThemedText>
+                          </Pressable>
+                        );
+                      }
+
+                      if (
+                        currentStory.words.includes(partKey) &&
+                        words[partKey]
+                      ) {
+                        return (
+                          <Pressable
+                            key={partIndex}
+                            onPress={() => selectWord(partKey)}
                             style={[
                               styles.inlineWord,
                               {
@@ -917,8 +1110,9 @@ export default function HomeScreen() {
                         </ThemedText>
                       );
                     })}
-                </ThemedView>
-              ))}
+                  </ThemedView>
+                );
+              })}
             </>
           ) : (
             <ThemedView
@@ -985,6 +1179,43 @@ export default function HomeScreen() {
                   {isSaved
                     ? '⭐ Palavra salva'
                     : '☆ Salvar palavra'}
+                </ThemedText>
+              </Pressable>
+            </ThemedView>
+          )}
+
+          {selectedExpression && (
+            <ThemedView style={styles.dictionaryBox}>
+              <ThemedText type="subtitle">
+                {selectedExpression.phrase}
+              </ThemedText>
+
+              <ThemedText style={styles.pronunciation}>
+                / {selectedExpression.pronunciation} /
+              </ThemedText>
+
+              <ThemedText style={styles.meaning}>
+                {selectedExpression.meaning}
+              </ThemedText>
+
+              <ThemedText style={styles.exampleTitle}>
+                Example:
+              </ThemedText>
+
+              <ThemedText>
+                {selectedExpression.example}
+              </ThemedText>
+
+              <Pressable
+                onPress={() =>
+                  Speech.speak(selectedExpression.phrase, {
+                    language: 'en-US',
+                  })
+                }
+                style={styles.audioButton}
+              >
+                <ThemedText>
+                  🔊 Listen
                 </ThemedText>
               </Pressable>
             </ThemedView>
