@@ -519,6 +519,7 @@ const expressionDictionary: Record<string, Expression> = {
 };
 
 const SAVED_WORDS_KEY = '@englishreader_saved_words';
+const SAVED_EXPRESSIONS_KEY = '@englishreader_saved_expressions';
 
 const stories: Story[] = [
   {
@@ -764,9 +765,14 @@ export default function HomeScreen() {
     return stories.filter((story) => story.level === level).length;
   };
   const [savedWords, setSavedWords] = useState<string[]>([]);
+  const [savedExpressions, setSavedExpressions] = useState<string[]>([]);
   const [searchSavedWords, setSearchSavedWords] = useState('');
+  const [searchSavedExpressions, setSearchSavedExpressions] = useState('');
   const filteredSavedWords = savedWords.filter((word) =>
     word.toLowerCase().includes(searchSavedWords.trim().toLowerCase())
+  );
+  const filteredSavedExpressions = savedExpressions.filter((expression) =>
+    expression.toLowerCase().includes(searchSavedExpressions.trim().toLowerCase())
   );
   const [reviewActive, setReviewActive] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
@@ -777,6 +783,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadSavedWords();
+    loadSavedExpressions();
   }, []);
 
   const loadSavedWords = async () => {
@@ -791,6 +798,18 @@ export default function HomeScreen() {
     }
   };
 
+  const loadSavedExpressions = async () => {
+    try {
+      const saved = await AsyncStorage.getItem(SAVED_EXPRESSIONS_KEY);
+
+      if (saved) {
+        setSavedExpressions(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.log('Erro ao carregar expressões:', error);
+    }
+  };
+
   const saveWordsToStorage = async (newSavedWords: string[]) => {
     try {
       await AsyncStorage.setItem(
@@ -799,6 +818,17 @@ export default function HomeScreen() {
       );
     } catch (error) {
       console.log('Erro ao salvar palavras:', error);
+    }
+  };
+
+  const saveExpressionsToStorage = async (newSavedExpressions: string[]) => {
+    try {
+      await AsyncStorage.setItem(
+        SAVED_EXPRESSIONS_KEY,
+        JSON.stringify(newSavedExpressions)
+      );
+    } catch (error) {
+      console.log('Erro ao salvar expressões:', error);
     }
   };
 
@@ -836,6 +866,35 @@ export default function HomeScreen() {
 
     setSavedWords(newSavedWords);
     await saveWordsToStorage(newSavedWords);
+  };
+
+  const toggleSavedExpression = async () => {
+    if (!selectedExpression) return;
+
+    let newSavedExpressions: string[];
+
+    if (savedExpressions.includes(selectedExpression.phrase)) {
+      newSavedExpressions = savedExpressions.filter(
+        (expression) => expression !== selectedExpression.phrase
+      );
+    } else {
+      newSavedExpressions = [
+        ...savedExpressions,
+        selectedExpression.phrase,
+      ];
+    }
+
+    setSavedExpressions(newSavedExpressions);
+    await saveExpressionsToStorage(newSavedExpressions);
+  };
+
+  const toggleSavedExpressionFromList = async (expression: string) => {
+    const newSavedExpressions = savedExpressions.filter(
+      (item) => item !== expression
+    );
+
+    setSavedExpressions(newSavedExpressions);
+    await saveExpressionsToStorage(newSavedExpressions);
   };
 
   const isSaved = selectedWord
@@ -1218,6 +1277,16 @@ export default function HomeScreen() {
                   🔊 Listen
                 </ThemedText>
               </Pressable>
+              <Pressable
+                onPress={toggleSavedExpression}
+                style={styles.saveButton}
+              >
+                <ThemedText>
+                  {savedExpressions.includes(selectedExpression.phrase)
+                    ? '⭐ Expressão salva'
+                    : '☆ Salvar expressão'}
+                </ThemedText>
+              </Pressable>
             </ThemedView>
           )}
 
@@ -1426,6 +1495,86 @@ export default function HomeScreen() {
                 })}
               </>
             )}
+          </ThemedView>
+
+          <ThemedView style={styles.savedBox}>
+            <ThemedText type="subtitle">
+              💬 Minhas expressões
+            </ThemedText>
+
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Buscar expressão salva..."
+              value={searchSavedExpressions}
+              onChangeText={setSearchSavedExpressions}
+              autoCapitalize="none"
+            />
+
+            <ThemedText>
+              {savedExpressions.length} expressão(ões) salva(s).
+            </ThemedText>
+
+            {searchSavedExpressions.trim() !== '' &&
+              filteredSavedExpressions.length === 0 && (
+                <ThemedText>
+                  Nenhuma expressão encontrada.
+                </ThemedText>
+              )}
+
+            {filteredSavedExpressions.map((expression) => {
+              const savedExpression = Object.values(expressionDictionary).find(
+                (item) =>
+                  item.phrase.toLowerCase().replace(/[?!.\s]+$/g, '') ===
+                  expression.toLowerCase().replace(/[?!.\s]+$/g, '')
+              );
+
+              if (!savedExpression) return null;
+
+              return (
+                <ThemedView
+                  key={expression}
+                  style={styles.savedWordButton}
+                >
+                  <ThemedText style={styles.savedWord}>
+                    ⭐ {savedExpression.phrase}
+                  </ThemedText>
+
+                  <ThemedText style={styles.savedWordMeaning}>
+                    {savedExpression.meaning}
+                  </ThemedText>
+
+                  <ThemedText style={styles.savedWordPronunciation}>
+                    / {savedExpression.pronunciation} /
+                  </ThemedText>
+
+                  <ThemedText>
+                    Example: {savedExpression.example}
+                  </ThemedText>
+
+                  <Pressable
+                    onPress={() =>
+                      Speech.speak(savedExpression.phrase, {
+                        language: 'en-US',
+                      })
+                    }
+                    style={styles.savedWordAudioButton}
+                  >
+                    <ThemedText>
+                      🔊 Ouvir
+                    </ThemedText>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => toggleSavedExpressionFromList(expression)}
+                    style={styles.savedWordAudioButton}
+                  >
+                    <ThemedText>
+                      🗑️ Remover
+                    </ThemedText>
+                  </Pressable>
+                </ThemedView>
+              );
+            })}
           </ThemedView>
 
           <ThemedView style={styles.tipBox}>
