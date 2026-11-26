@@ -775,6 +775,14 @@ export default function HomeScreen() {
     expression.toLowerCase().includes(searchSavedExpressions.trim().toLowerCase())
   );
   const [reviewActive, setReviewActive] = useState(false);
+  const [reviewWords, setReviewWords] = useState<string[]>([]);
+  const [reviewExpressions, setReviewExpressions] = useState<string[]>([]);
+  const [expressionReviewActive, setExpressionReviewActive] = useState(false);
+  const [expressionReviewIndex, setExpressionReviewIndex] = useState(0);
+  const [expressionReviewScore, setExpressionReviewScore] = useState(0);
+  const [expressionReviewAnswer, setExpressionReviewAnswer] = useState<string | null>(null);
+  const [expressionReviewOptions, setExpressionReviewOptions] = useState<string[]>([]);
+  const [expressionReviewFinished, setExpressionReviewFinished] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
   const [reviewAnswer, setReviewAnswer] = useState<string | null>(null);
   const [reviewScore, setReviewScore] = useState(0);
@@ -838,7 +846,15 @@ export default function HomeScreen() {
   };
 
   const selectExpression = (expression: string) => {
-    setSelectedExpression(expressionDictionary[expression]);
+    const normalizedExpression = expression
+      .toLowerCase()
+      .replace(/[?!.\s]+$/g, '');
+
+    const foundExpression = expressionDictionary[normalizedExpression];
+
+    if (!foundExpression) return;
+
+    setSelectedExpression(foundExpression);
     setSelectedWord(null);
   };
 
@@ -918,12 +934,95 @@ export default function HomeScreen() {
     return options.sort(() => Math.random() - 0.5);
   };
 
+  const generateExpressionReviewOptions = (correctMeaning: string) => {
+    const otherMeanings = Object.values(expressionDictionary)
+      .map((expression) => expression.meaning)
+      .filter((meaning) => meaning !== correctMeaning);
+
+    const shuffledMeanings = [...new Set(otherMeanings)]
+      .sort(() => Math.random() - 0.5);
+
+    const options = [
+      correctMeaning,
+      ...shuffledMeanings.slice(0, 3),
+    ];
+
+    return options.sort(() => Math.random() - 0.5);
+  };
+
+  const startExpressionReview = () => {
+    if (savedExpressions.length === 0) {
+      alert('Salve algumas expressões antes de começar a revisão!');
+      return;
+    }
+
+    const firstExpression = Object.values(expressionDictionary).find(
+      (item) => item.phrase === savedExpressions[0]
+    );
+
+    if (!firstExpression) return;
+
+    setReviewExpressions([...savedExpressions]);
+    setExpressionReviewIndex(0);
+    setExpressionReviewScore(0);
+    setExpressionReviewFinished(false);
+    setExpressionReviewAnswer(null);
+
+    setExpressionReviewOptions(
+      generateExpressionReviewOptions(firstExpression.meaning)
+    );
+
+    setReviewActive(false);
+    setExpressionReviewActive(true);
+  };
+
+  const answerExpressionReview = (answer: string) => {
+    if (expressionReviewAnswer !== null) return;
+
+    const currentExpression = Object.values(expressionDictionary).find(
+      (item) => item.phrase === reviewExpressions[expressionReviewIndex]
+    );
+
+    if (!currentExpression) return;
+
+    setExpressionReviewAnswer(answer);
+
+    if (answer === currentExpression.meaning) {
+      setExpressionReviewScore((previousScore) => previousScore + 1);
+    }
+  };
+
+  const nextExpressionReview = () => {
+    if (expressionReviewAnswer === null) return;
+
+    const nextIndex = expressionReviewIndex + 1;
+
+    if (nextIndex >= reviewExpressions.length) {
+      setExpressionReviewFinished(true);
+      return;
+    }
+
+    const nextExpression = Object.values(expressionDictionary).find(
+      (item) => item.phrase === reviewExpressions[nextIndex]
+    );
+
+    if (!nextExpression) return;
+
+    setExpressionReviewIndex(nextIndex);
+    setExpressionReviewAnswer(null);
+
+    setExpressionReviewOptions(
+      generateExpressionReviewOptions(nextExpression.meaning)
+    );
+  };
+
   const startReview = () => {
     if (savedWords.length === 0) {
       alert('Salve algumas palavras antes de começar a revisão!');
       return;
     }
 
+    setReviewWords([...savedWords]);
     setReviewIndex(0);
     setReviewScore(0);
     setReviewFinished(false);
@@ -931,7 +1030,7 @@ export default function HomeScreen() {
 
     const firstWord = words[savedWords[0]];
     setReviewOptions(generateReviewOptions(firstWord.meaning));
-
+    setExpressionReviewActive(false);
     setReviewActive(true);
   };
 
@@ -1290,18 +1389,18 @@ export default function HomeScreen() {
             </ThemedView>
           )}
 
-          {reviewActive && savedWords.length > 0 && (
+          {reviewActive && reviewWords.length > 0 && (
             <ThemedView style={styles.dictionaryBox}>
               <ThemedText type="subtitle">
                 🧠 Revisão de inglês
               </ThemedText>
 
               <ThemedText>
-                Palavra {reviewIndex + 1} de {savedWords.length}
+                Palavra {reviewIndex + 1} de {reviewWords.length}
               </ThemedText>
 
               <ThemedText type="title">
-                What does "{words[savedWords[reviewIndex]].word}" mean?
+                What does "{words[reviewWords[reviewIndex]].word}" mean?
               </ThemedText>
 
               {reviewOptions.map((option) => (
@@ -1325,7 +1424,7 @@ export default function HomeScreen() {
                   }
 
                   const correctAnswer =
-                    words[savedWords[reviewIndex]].meaning;
+                    words[reviewWords[reviewIndex]].meaning;
 
                   const isCorrect = reviewAnswer === correctAnswer;
 
@@ -1336,14 +1435,14 @@ export default function HomeScreen() {
                     alert(`A resposta correta é: ${correctAnswer}`);
                   }
 
-                  if (reviewIndex + 1 < savedWords.length) {
+                  if (reviewIndex + 1 < reviewWords.length) {
                     const nextIndex = reviewIndex + 1;
 
                     setReviewIndex(nextIndex);
                     setReviewAnswer(null);
                     setReviewOptions(
                       generateReviewOptions(
-                        words[savedWords[nextIndex]].meaning
+                        words[reviewWords[nextIndex]].meaning
                       )
                     );
                   } else {
@@ -1377,19 +1476,19 @@ export default function HomeScreen() {
             </ThemedView>
           )}
 
-          {reviewFinished && savedWords.length > 0 && (
+          {reviewFinished && reviewWords.length > 0 && (
             <ThemedView style={styles.dictionaryBox}>
               <ThemedText type="subtitle">
                 🏆 Revisão concluída!
               </ThemedText>
 
               <ThemedText type="title">
-                {reviewScore} de {savedWords.length} acertos
+                {reviewScore} de {reviewWords.length} acertos
               </ThemedText>
 
               <ThemedText>
                 Você acertou{' '}
-                {Math.round((reviewScore / savedWords.length) * 100)}% das perguntas.
+                {Math.round((reviewScore / reviewWords.length) * 100)}% das perguntas.
               </ThemedText>
 
               <Pressable
@@ -1411,6 +1510,125 @@ export default function HomeScreen() {
               </Pressable>
             </ThemedView>
           )}
+
+          {expressionReviewActive &&
+            !expressionReviewFinished &&
+            reviewExpressions.length > 0 && (
+              <ThemedView style={styles.dictionaryBox}>
+                <ThemedText type="subtitle">
+                  🧠 Revisão de expressões
+                </ThemedText>
+
+                <ThemedText>
+                  Expressão {expressionReviewIndex + 1} de {reviewExpressions.length}
+                </ThemedText>
+
+                <ThemedText type="title">
+                  What does "{reviewExpressions[expressionReviewIndex]}" mean?
+                </ThemedText>
+
+                {expressionReviewOptions.map((option) => (
+                  <Pressable
+                    key={option}
+                    onPress={() => answerExpressionReview(option)}
+                    disabled={expressionReviewAnswer !== null}
+                    style={styles.saveButton}
+                  >
+                    <ThemedText>
+                      {expressionReviewAnswer === option ? '🔘 ' : '⚪ '}
+                      {option}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+                {expressionReviewAnswer !== null && (
+                  <ThemedView>
+                    <ThemedText type="subtitle">
+                      {expressionReviewAnswer ===
+                        Object.values(expressionDictionary).find(
+                          (item) =>
+                            item.phrase === reviewExpressions[expressionReviewIndex]
+                        )?.meaning
+                        ? '✅ Correto! Muito bem!'
+                        : '❌ Resposta incorreta'}
+                    </ThemedText>
+
+                    <ThemedText>
+                      Resposta correta:{' '}
+                      {Object.values(expressionDictionary).find(
+                        (item) =>
+                          item.phrase === reviewExpressions[expressionReviewIndex]
+                      )?.meaning}
+                    </ThemedText>
+                    <Pressable
+                      onPress={nextExpressionReview}
+                      style={styles.audioButton}
+                    >
+                      <ThemedText>
+                        {expressionReviewIndex + 1 < reviewExpressions.length
+                          ? 'Próxima expressão ➜'
+                          : 'Ver resultado 🏆'}
+                      </ThemedText>
+                    </Pressable>
+                  </ThemedView>
+                )}
+
+                <Pressable
+                  onPress={() => {
+                    setExpressionReviewActive(false);
+                    setExpressionReviewFinished(false);
+                    setExpressionReviewAnswer(null);
+                  }}
+                  style={styles.saveButton}
+                >
+                  <ThemedText>
+                    Sair da revisão
+                  </ThemedText>
+                </Pressable>
+
+              </ThemedView>
+            )}
+
+          {expressionReviewFinished && reviewExpressions.length > 0 && (
+            <ThemedView style={styles.dictionaryBox}>
+              <ThemedText type="subtitle">
+                🏆 Revisão de expressões concluída!
+              </ThemedText>
+
+              <ThemedText type="title">
+                {expressionReviewScore} de {reviewExpressions.length} acertos
+              </ThemedText>
+
+              <ThemedText>
+                Você acertou{' '}
+                {Math.round(
+                  (expressionReviewScore / reviewExpressions.length) * 100
+                )}% das perguntas.
+              </ThemedText>
+
+              <Pressable
+                onPress={startExpressionReview}
+                style={styles.saveButton}
+              >
+                <ThemedText>
+                  🔄 Tentar novamente
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setExpressionReviewActive(false);
+                  setExpressionReviewFinished(false);
+                  setExpressionReviewAnswer(null);
+                }}
+                style={styles.saveButton}
+              >
+                <ThemedText>
+                  💬 Voltar às expressões salvas
+                </ThemedText>
+              </Pressable>
+            </ThemedView>
+          )}
+
           <ThemedView style={styles.savedBox}>
             <ThemedText type="subtitle">
               📚 Minhas palavras
@@ -1510,6 +1728,15 @@ export default function HomeScreen() {
               autoCapitalize="none"
             />
 
+            <Pressable
+              onPress={startExpressionReview}
+              style={styles.saveButton}
+            >
+              <ThemedText>
+                🧠 Revisar minhas expressões
+              </ThemedText>
+            </Pressable>
+
             <ThemedText>
               {savedExpressions.length} expressão(ões) salva(s).
             </ThemedText>
@@ -1535,17 +1762,19 @@ export default function HomeScreen() {
                   key={expression}
                   style={styles.savedWordButton}
                 >
-                  <ThemedText style={styles.savedWord}>
-                    ⭐ {savedExpression.phrase}
-                  </ThemedText>
+                  <Pressable onPress={() => selectExpression(expression)}>
+                    <ThemedText style={styles.savedWord}>
+                      ⭐ {savedExpression.phrase}
+                    </ThemedText>
 
-                  <ThemedText style={styles.savedWordMeaning}>
-                    {savedExpression.meaning}
-                  </ThemedText>
+                    <ThemedText style={styles.savedWordMeaning}>
+                      {savedExpression.meaning}
+                    </ThemedText>
 
-                  <ThemedText style={styles.savedWordPronunciation}>
-                    / {savedExpression.pronunciation} /
-                  </ThemedText>
+                    <ThemedText style={styles.savedWordPronunciation}>
+                      / {savedExpression.pronunciation} /
+                    </ThemedText>
+                  </Pressable>
 
                   <ThemedText>
                     Example: {savedExpression.example}
@@ -1589,7 +1818,7 @@ export default function HomeScreen() {
           </ThemedView>
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </ThemedView >
   );
 }
 
