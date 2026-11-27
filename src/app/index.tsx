@@ -29,6 +29,13 @@ type Expression = {
 
 type EnglishLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 
+type ComprehensionQuestion = {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+};
+
 type Story = {
   id: string;
   title: string;
@@ -36,6 +43,7 @@ type Story = {
   words: string[];
   expressions?: string[];
   paragraphs: string[];
+  comprehensionQuestions?: ComprehensionQuestion[];
 };
 
 const levelNames: Record<EnglishLevel, string> = {
@@ -541,6 +549,44 @@ const stories: Story[] = [
       'Some people were reading books, while others were talking with their friends.',
       'I sat under a tree and watched the world around me.',
     ],
+    comprehensionQuestions: [
+      {
+        question: 'Where did the narrator go yesterday?',
+        options: [
+          'To the supermarket.',
+          'To the park.',
+          'To school.',
+          'To the beach.',
+        ],
+        correctAnswer: 'To the park.',
+        explanation:
+          'No primeiro parágrafo, o narrador conta que decidiu caminhar pelo parque.',
+      },
+      {
+        question: 'What were some people doing?',
+        options: [
+          'Playing football.',
+          'Buying food.',
+          'Reading books.',
+          'Riding bicycles.',
+        ],
+        correctAnswer: 'Reading books.',
+        explanation:
+          'O quarto parágrafo informa que algumas pessoas estavam lendo livros, enquanto outras conversavam com seus amigos.',
+      },
+      {
+        question: 'What does "quiet" mean in the story?',
+        options: [
+          'Silencioso.',
+          'Perigoso.',
+          'Movimentado.',
+          'Sujo.',
+        ],
+        correctAnswer: 'Silencioso.',
+        explanation:
+          'A palavra "quiet" descreve as ruas como tranquilas e silenciosas, indicando pouco barulho.',
+      },
+    ],
   },
   {
     id: 'busy-morning',
@@ -783,6 +829,18 @@ export default function HomeScreen() {
   const [expressionReviewAnswer, setExpressionReviewAnswer] = useState<string | null>(null);
   const [expressionReviewOptions, setExpressionReviewOptions] = useState<string[]>([]);
   const [expressionReviewFinished, setExpressionReviewFinished] = useState(false);
+  const [comprehensionActive, setComprehensionActive] = useState(false);
+  const [comprehensionIndex, setComprehensionIndex] = useState(0);
+  const [comprehensionScore, setComprehensionScore] = useState(0);
+  const [comprehensionAnswer, setComprehensionAnswer] = useState<string | null>(null);
+  const [comprehensionOptions, setComprehensionOptions] = useState<string[]>([]);
+  const [comprehensionFinished, setComprehensionFinished] = useState(false);
+  const [comprehensionStory, setComprehensionStory] = useState<Story | null>(null);
+  const comprehensionQuestions =
+    comprehensionStory?.comprehensionQuestions ?? [];
+
+  const currentComprehensionQuestion =
+    comprehensionQuestions[comprehensionIndex];
   const [reviewIndex, setReviewIndex] = useState(0);
   const [reviewAnswer, setReviewAnswer] = useState<string | null>(null);
   const [reviewScore, setReviewScore] = useState(0);
@@ -950,6 +1008,88 @@ export default function HomeScreen() {
     return options.sort(() => Math.random() - 0.5);
   };
 
+  const shuffleComprehensionOptions = (options: string[]) => {
+    const shuffledOptions = [...options];
+
+    for (let i = shuffledOptions.length - 1; i > 0; i--) {
+      const randomIndex = Math.floor(Math.random() * (i + 1));
+
+      [shuffledOptions[i], shuffledOptions[randomIndex]] = [
+        shuffledOptions[randomIndex],
+        shuffledOptions[i],
+      ];
+    }
+
+    return shuffledOptions;
+  };
+
+  const answerComprehension = (answer: string) => {
+    if (comprehensionAnswer !== null) return;
+
+    const currentQuestion =
+      comprehensionStory?.comprehensionQuestions?.[comprehensionIndex];
+
+    if (!currentQuestion) return;
+
+    setComprehensionAnswer(answer);
+
+    if (answer === currentQuestion.correctAnswer) {
+      setComprehensionScore((previousScore) => previousScore + 1);
+    }
+  };
+
+  const nextComprehension = () => {
+    if (comprehensionAnswer === null) return;
+
+    const questions = comprehensionStory?.comprehensionQuestions;
+
+    if (!questions?.length) return;
+
+    const nextIndex = comprehensionIndex + 1;
+
+    if (nextIndex >= questions.length) {
+      setComprehensionActive(false);
+      setComprehensionFinished(true);
+      setComprehensionAnswer(null);
+      return;
+    }
+
+    setComprehensionIndex(nextIndex);
+    setComprehensionAnswer(null);
+
+    setComprehensionOptions(
+      shuffleComprehensionOptions(
+        questions[nextIndex].options
+      )
+    );
+  };
+
+  const startComprehension = (story: Story) => {
+    if (!story.comprehensionQuestions?.length) {
+      alert('Esta história ainda não possui exercícios de compreensão.');
+      return;
+    }
+
+    setComprehensionStory(story);
+    setComprehensionIndex(0);
+    setComprehensionScore(0);
+    setComprehensionAnswer(null);
+    setComprehensionFinished(false);
+
+    setComprehensionOptions(
+      shuffleComprehensionOptions(
+        story.comprehensionQuestions[0].options
+      )
+    );
+
+    setReviewActive(false);
+    setReviewFinished(false);
+    setExpressionReviewActive(false);
+    setExpressionReviewFinished(false);
+
+    setComprehensionActive(true);
+  };
+
   const startExpressionReview = () => {
     if (savedExpressions.length === 0) {
       alert('Salve algumas expressões antes de começar a revisão!');
@@ -973,6 +1113,8 @@ export default function HomeScreen() {
     );
 
     setReviewActive(false);
+    setComprehensionActive(false);
+    setComprehensionFinished(false);
     setExpressionReviewActive(true);
   };
 
@@ -1031,6 +1173,8 @@ export default function HomeScreen() {
     const firstWord = words[savedWords[0]];
     setReviewOptions(generateReviewOptions(firstWord.meaning));
     setExpressionReviewActive(false);
+    setComprehensionActive(false);
+    setComprehensionFinished(false);
     setReviewActive(true);
   };
 
@@ -1271,6 +1415,16 @@ export default function HomeScreen() {
                   </ThemedView>
                 );
               })}
+              {(currentStory.comprehensionQuestions?.length ?? 0) > 0 && (
+                <Pressable
+                  onPress={() => startComprehension(currentStory)}
+                  style={styles.saveButton}
+                >
+                  <ThemedText>
+                    📝 Testar minha compreensão
+                  </ThemedText>
+                </Pressable>
+              )}
             </>
           ) : (
             <ThemedView
@@ -1388,6 +1542,132 @@ export default function HomeScreen() {
               </Pressable>
             </ThemedView>
           )}
+
+          {comprehensionActive && currentComprehensionQuestion && (
+            <ThemedView style={styles.dictionaryBox}>
+              <ThemedText type="subtitle">
+                📝 Compreensão textual
+              </ThemedText>
+
+              <ThemedText>
+                {comprehensionStory?.title}
+              </ThemedText>
+
+              <ThemedText>
+                Pergunta {comprehensionIndex + 1} de {comprehensionQuestions.length}
+              </ThemedText>
+
+              <ThemedText type="title">
+                {currentComprehensionQuestion.question}
+              </ThemedText>
+
+              {comprehensionOptions.map((option) => (
+                <Pressable
+                  key={option}
+                  onPress={() => answerComprehension(option)}
+                  disabled={comprehensionAnswer !== null}
+                  style={styles.saveButton}
+                >
+                  <ThemedText>
+                    {comprehensionAnswer === option ? '🔘 ' : '⚪ '}
+                    {option}
+                  </ThemedText>
+                </Pressable>
+              ))}
+              {comprehensionAnswer !== null && (
+                <ThemedView>
+                  <ThemedText type="subtitle">
+                    {comprehensionAnswer === currentComprehensionQuestion.correctAnswer
+                      ? '✅ Correto! Muito bem!'
+                      : '❌ Resposta incorreta'}
+                  </ThemedText>
+
+                  <ThemedText>
+                    Resposta correta: {currentComprehensionQuestion.correctAnswer}
+                  </ThemedText>
+
+                  <ThemedText type="subtitle">
+                    💡 Explicação
+                  </ThemedText>
+
+                  <ThemedText>
+                    {currentComprehensionQuestion.explanation}
+                  </ThemedText>
+
+                  <Pressable
+                    onPress={nextComprehension}
+                    style={styles.audioButton}
+                  >
+                    <ThemedText>
+                      {comprehensionIndex + 1 < comprehensionQuestions.length
+                        ? 'Próxima pergunta ➜'
+                        : 'Ver resultado 🏆'}
+                    </ThemedText>
+                  </Pressable>
+                </ThemedView>
+              )}
+
+              <Pressable
+                onPress={() => {
+                  setComprehensionActive(false);
+                  setComprehensionFinished(false);
+                  setComprehensionAnswer(null);
+                }}
+                style={styles.saveButton}
+              >
+                <ThemedText>
+                  Sair do exercício
+                </ThemedText>
+              </Pressable>
+
+            </ThemedView>
+          )}
+
+          {comprehensionFinished &&
+            comprehensionStory &&
+            comprehensionQuestions.length > 0 && (
+              <ThemedView style={styles.dictionaryBox}>
+                <ThemedText type="subtitle">
+                  🏆 Compreensão textual concluída!
+                </ThemedText>
+
+                <ThemedText>
+                  {comprehensionStory.title}
+                </ThemedText>
+
+                <ThemedText type="title">
+                  {comprehensionScore} de {comprehensionQuestions.length} acertos
+                </ThemedText>
+
+                <ThemedText>
+                  Você acertou{' '}
+                  {Math.round(
+                    (comprehensionScore / comprehensionQuestions.length) * 100
+                  )}% das perguntas.
+                </ThemedText>
+
+                <Pressable
+                  onPress={() => startComprehension(comprehensionStory)}
+                  style={styles.saveButton}
+                >
+                  <ThemedText>
+                    🔄 Tentar novamente
+                  </ThemedText>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    setComprehensionFinished(false);
+                    setComprehensionStory(null);
+                  }}
+                  style={styles.saveButton}
+                >
+                  <ThemedText>
+                    📖 Voltar à leitura
+                  </ThemedText>
+                </Pressable>
+              </ThemedView>
+            )}
 
           {reviewActive && reviewWords.length > 0 && (
             <ThemedView style={styles.dictionaryBox}>
